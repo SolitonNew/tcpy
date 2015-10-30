@@ -252,10 +252,9 @@ class LCD(object):
         text - измеряемый текст
         font - экземпляр класса Font
         """
-        chars = font.chars;
         w = 0
         for c in text:
-            w += chars[ord(c)][1]
+            w += font.char_size(ord(c))[1]
         return(w, font.height)
 
     def text(self, x, y, text, font, wrap = False, inv = False):
@@ -271,7 +270,6 @@ class LCD(object):
                будет обрезан.
         inv - Если True или 1, то текст будет выведен в инвертированом виде.
         """
-        chars = font.chars;
         cx = x
         h = font.height
         for c in text:
@@ -280,14 +278,15 @@ class LCD(object):
                 o -= 848
             if o > 255:
                 o = 32
-            if cx + chars[o][1] > self.width():
+            cs = font.char_size(o)
+            if cx + cs[1] > self.width():
                 if wrap:
                     cx = x
                     y += h
                 else:
-                    if cx + chars[o][1] >= self.width() + chars[32][1]:
+                    if cx + cs[1] >= self.width() + font.char_size(32)[1]:
                         return()
-            for col in font.charData(o):
+            for col in font.char_data(o):
                 for i in range(h):
                     pix = col & (1 << i)
                     if inv:

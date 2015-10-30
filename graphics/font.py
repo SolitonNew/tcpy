@@ -14,23 +14,11 @@ import math
 class Font(object):  
     def __init__(self, fileName):
         self.file = None
-        self.fileName = fileName        
-        self._loadMeta()
+        self.fileName = fileName
+        self.open()
 
     def __del__(self):
         self.close()
-
-    def _loadMeta(self):
-        self.open()
-        f = self.file        
-        f.read(31) # Зарезервировано
-        self.height = f.read(1)[0] # Высота шрифта
-        self.chars = []
-        for i in range(256): # Читаем метаданные символов
-            p = f.read(3)
-            x = (p[1] << 8) + p[0]
-            w = p[2]
-            self.chars.append([x, w])
 
     """
     Метод открывает файл шрифта на чтение. При создании этот метод
@@ -40,6 +28,8 @@ class Font(object):
     def open(self):
         if not self.file:
             self.file = open(self.fileName, 'rb')
+            self.file.seek(31)
+            self.height = self.file.read(1)[0] # Читаем высоту шрифта
 
     """
     Метод закрывает файловый поток шрифта.
@@ -48,19 +38,29 @@ class Font(object):
     def close(self):
         if self.file: self.file.close()
         self.file = None
+
+    def char_size(self, c):
+        f = self.file
+        # Смещаемся в потоке на нужный символ
+        f.seek(32 + c * 3)
+        p = f.read(3)
+        x = (p[1] << 8) + p[0]
+        w = p[2]
+        return(x, w)
         
     """
     Метод для получения точечного представления символа из соответствующего
     файла шрифта.
     """
-    def charData(self, c):
+    def char_data(self, c):
+        cs = self.char_size(c)        
         bh = math.ceil(self.height / 8)
         f = self.file
         # Смещаемся в потоке на нужный символ
-        f.seek(32 + 256 * 3 + self.chars[c][0] * bh)
+        f.seek(32 + 256 * 3 + cs[0] * bh)
         res = []
         # Читаем нужный символ
-        for x in range(self.chars[c][1]):
+        for x in range(cs[1]):
             b = 0
             for y in range(bh):
                 r = f.read(1)
