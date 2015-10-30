@@ -4,9 +4,10 @@ Copyright (c) 2015, Moklyak Alexandr.
 
 Экраны телефонов, которые поддерживаются:
     - Mitsubishi TiumMars
-    - Nokia 1110i
     - Nokia 3210
     - Nokia 5210
+
+    - Nokia 1110i * Не проверено
 """
 
 import pyb

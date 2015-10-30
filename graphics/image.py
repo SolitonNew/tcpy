@@ -1,5 +1,7 @@
 """
 Класс декодер растрового изображения формата BMP.
+Copyright (c) 2015, Moklyak Alexandr.
+
 Информация изображения зачитывается непосредственно из файла и не кешируется.
 При создании экземпляра файл изображения открывается на чтение.
 Если при открытии не произошло исключения, то информация о растровом
@@ -20,12 +22,12 @@ class BMP(object):
     def __del__(self):
         self.close()
         
-    """
-    Метод открывает файл изображения на чтение. При создании этот метод
-    вызывается автоматически. Но если файл был закрыт методом close(), этим
-    методом его можно открыть заново.
-    """
     def open(self):
+        """
+        Метод открывает файл изображения на чтение. При создании этот метод
+        вызывается автоматически. Но если файл был закрыт методом close(), этим
+        методом его можно открыть заново.
+        """
         if self.file: return
         
         self.file = open(self.fileName, 'rb')
@@ -34,11 +36,11 @@ class BMP(object):
         if f.read(2) == bytearray(b'BM'):
             # Чтение смещения блока пикселей
             f.seek(0x0A)
-            self.dataOff = self._linkBytes(f.read(4))
+            self.dataOff = self._link_bytes(f.read(4))
 
             # Чтение размера/версии заголовка
             f.seek(0x0E)
-            b = self._linkBytes(f.read(2))            
+            b = self._link_bytes(f.read(2))            
 
             if b == 12:
                 self.version = 'CORE'
@@ -49,11 +51,11 @@ class BMP(object):
             else:
                 # Читаем тип компрессии
                 f.seek(0x1E)
-                self.compression = self._linkBytes(f.read(4))
+                self.compression = self._link_bytes(f.read(4))
 
                 # Читаем количество используемых цветов палитры
                 f.seek(0x2E)
-                self.clrUsed = self._linkBytes(f.read(4))
+                self.clrUsed = self._link_bytes(f.read(4))
                 
                 if b == 40:
                     self.version = '3'
@@ -75,7 +77,7 @@ class BMP(object):
 
             # Чтение битности изображения
             f.seek(bit_addr)
-            self.bits = self._linkBytes(f.read(2))
+            self.bits = self._link_bytes(f.read(2))
 
             # Проверяем длинну палитры
             if self.clrUsed == 0:
@@ -89,27 +91,27 @@ class BMP(object):
                 self.palette = []
                 f.seek(pal_addr)
                 for i in range(self.clrUsed):
-                    self.palette.append(self._linkBytes(f.read(3)))
+                    self.palette.append(self._link_bytes(f.read(3)))
     
             f.seek(0x12)
             # Реальная ширина картинки
-            self.image_w = self._linkBytes(f.read(4))
+            self.image_w = self._link_bytes(f.read(4))
             # Реальная высота картинки
-            self.image_h = self._linkBytes(f.read(4))
+            self.image_h = self._link_bytes(f.read(4))
         else:
             self.close()
             raise(BMPError('Формат не поддерживается'))
 
-    """
-    Метод закрывает файловый поток растрового изображения.
-    Не забывайте его вызывать, если изображение уже не понадобится.
-    """
     def close(self):
+        """
+        Метод закрывает файловый поток растрового изображения.
+        Не забывайте его вызывать, если изображение уже не понадобится.
+        """
         if self.file:
             self.file.close()
         self.file = None
 
-    def _linkBytes(self, bts):
+    def _link_bytes(self, bts):
         res = 0
         i = 0
         for b in bts:
@@ -118,24 +120,24 @@ class BMP(object):
             i += 8
         return res
 
-    """
-    Реальная ширина растрового изображения.
-    """
     def width(self):
+        """
+        Реальная ширина растрового изображения.
+        """
         if not self.file: raise(BMPError('Файл не открыт'))
         return(self.image_w)
 
-    """
-    Реальная высота растрового изображения.
-    """
     def height(self):
+        """
+        Реальная высота растрового изображения.
+        """
         if not self.file: raise(BMPError('Файл не открыт'))
         return(abs(self.image_h))
 
-    """
-    Метод возвращает значение пикселя изображения по указаным координатам X, Y.
-    """
     def pixel(self, x, y):
+        """
+        Метод возвращает значение пикселя изображения по указаным координатам X, Y.
+        """
         if not self.file: raise(BMPError('Файл не открыт'))
         
         if 0 > x > self.image_w - 1:
@@ -185,7 +187,7 @@ class BMP(object):
         f = self.file
         n = (self.image_h - y - 1) * self.image_w + x
         f.seek(self.dataOff + n * 2)
-        b = self._linkBytes(f.read(2))
+        b = self._link_bytes(f.read(2))
         if self.palette:
             return(self.palette[b])
         else:
@@ -195,14 +197,14 @@ class BMP(object):
         f = self.file
         n = (self.image_h - y - 1) * self.image_w + x
         f.seek(self.dataOff + n * 3)
-        b = self._linkBytes(f.read(4))
+        b = self._link_bytes(f.read(4))
         return(b)
 
     def _pixel_32(self, x, y): # 32 bit
         f = self.file
         n = (self.image_h - y - 1) * self.image_w + x
         f.seek(self.dataOff + n * 4)
-        b = self._linkBytes(f.read(3))
+        b = self._link_bytes(f.read(3))
         return(b)
 
 """
@@ -215,8 +217,7 @@ class BMPError(Exception):
         return self.value
 
 """
-bmp = BMP('bmp_p.bmp')
-bmp.close()
+bmp = BMP('images/mp.bmp')
 for y in range(bmp.height()):
     s = ''
     for x in range(bmp.width()):
@@ -225,4 +226,5 @@ for y in range(bmp.height()):
         else:
             s += ' '
     print(s)
+bmp.close()
 """
