@@ -1,2 +1,1 @@
-# tcpy
-   
+Automated control system for residental building.
