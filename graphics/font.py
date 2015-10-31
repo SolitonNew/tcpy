@@ -1,15 +1,13 @@
 """
-Класс является контейнером шрифта. Используется как драйвер шрифтов
-для метода textOut класса LCD.
+The class is a font container. Is used as a font driver for text() method
+of LCD class.
 Copyright (c) 2015, Moklyak Alexandr.
 
-Файл шрифта представляет собой бинарный файл созданый отдельной утилитой.
-Данные файла содержат точечный оттиск каждого символа ASCII. При создании
-экземпляра класса Font необходимо указать путь к файлу шрифта. Сам класс
-в начале зачитывает только высоту шрифта.
-Позиции символов, их размеры и битовые маски зачитываются каждый раз прямо
-из файла. Тем самым немного увеличивается время отображения, но значительно
-экономится память.
+Font file is a binary file created by font_generator utilit. This file
+contains pixel image of awery symbol ASCII. When Font() class is created
+the path to font file needs to be pointed. Symbol position, size and bit
+masks are read avery time directly from the file. Thus, the display time
+increases slightly but significantly save memory.
 """
 
 import math
@@ -25,9 +23,9 @@ class Font(object):
 
     def open(self):
         """
-        Метод открывает файл шрифта на чтение. При создании этот метод
-        вызывается автоматически. Но если файл был закрыт методом close(), этим
-        методом его можно открыть заново.
+        The method openes font file for reading. This method is could
+        automaticle when created. But is file close by close() method you
+        can open a file with this method again.
         """
         if not self.file:
             self.file = open(self.fileName, 'rb')
@@ -36,17 +34,16 @@ class Font(object):
 
     def close(self):
         """
-        Метод закрывает файловый поток шрифта.
-        Не забывайте его вызывать, если шрифт уже не понадобится.
+        The method closes font file stream.
+        Don't for get to coll it when font is not needed.
         """
         if self.file: self.file.close()
         self.file = None
 
     def char_size(self, c):
         """
-        Метод выполняет чтение из заголовка файла шрифта позицию в растре и
-        ширину символа.
-        Возвращает кортеж (позиция, ширина)
+        The method reads from font file header raster position and symbol width.
+        Returns back tuple (position, width).
         """
         f = self.file
         # Смещаемся в потоке на нужный символ
@@ -58,9 +55,8 @@ class Font(object):
         
     def char_data(self, c):
         """
-        Метод для получения точечного представления символа из соответствующего
-        файла шрифта.
-        Возвращает список битовых масок для отрисовки шрифта.
+        The method is for getting symbol image.
+        Returns back bit masks list for font drawing.
         """
         cs = self.char_size(c)        
         bh = math.ceil(self.height / 8)

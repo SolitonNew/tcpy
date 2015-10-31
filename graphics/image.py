@@ -1,11 +1,8 @@
 """
-Класс декодер растрового изображения формата BMP.
+The class is a raster image decoder.
 Copyright (c) 2015, Moklyak Alexandr.
 
-Информация изображения зачитывается непосредственно из файла и не кешируется.
-При создании экземпляра файл изображения открывается на чтение.
-Если при открытии не произошло исключения, то информация о растровом
-изображении становится доступной для чтения.
+Image information is read from directly, and not cashing.
 """
 
 import math
@@ -24,21 +21,21 @@ class BMP(object):
         
     def open(self):
         """
-        Метод открывает файл изображения на чтение. При создании этот метод
-        вызывается автоматически. Но если файл был закрыт методом close(), этим
-        методом его можно открыть заново.
+        The method openes image file for reading. This method is could
+        automaticle when created. But is file close by close() method you
+        can open a file with this method again.
         """
         if self.file: return
         
         self.file = open(self.fileName, 'rb')
         f = self.file
-        # Проверка сигнатуры BMP формата
+        # Signature check of BMP format.
         if f.read(2) == bytearray(b'BM'):
-            # Чтение смещения блока пикселей
+            # Reading of the pixel bloks offset.
             f.seek(0x0A)
             self.dataOff = self._link_bytes(f.read(4))
 
-            # Чтение размера/версии заголовка
+            # Reading of header size (version)
             f.seek(0x0E)
             b = self._link_bytes(f.read(2))            
 
@@ -49,11 +46,11 @@ class BMP(object):
                 self.compression = 0
                 self.clrUsed = 0
             else:
-                # Читаем тип компрессии
+                # Reading of compression type.
                 f.seek(0x1E)
                 self.compression = self._link_bytes(f.read(4))
 
-                # Читаем количество используемых цветов палитры
+                # Reading of the quantity of colors in palette.
                 f.seek(0x2E)
                 self.clrUsed = self._link_bytes(f.read(4))
                 
@@ -75,18 +72,18 @@ class BMP(object):
                     bit_addr = 0x1C
                     pal_addr = 0x8A                
 
-            # Чтение битности изображения
+            # Reading the bit depth images.
             f.seek(bit_addr)
             self.bits = self._link_bytes(f.read(2))
 
-            # Проверяем длинну палитры
+            # Checking palette length.
             if self.clrUsed == 0:
                 if self.bits == 4:
                     self.clrUsed = 16
                 elif self.bits == 8:
                     self.clrUsed = 256
                     
-            # Если палитра нужна - загружаем ее
+            # If palette is needed - uploading.
             if self.clrUsed > 0:
                 self.palette = []
                 f.seek(pal_addr)
@@ -94,18 +91,18 @@ class BMP(object):
                     self.palette.append(self._link_bytes(f.read(3)))
     
             f.seek(0x12)
-            # Реальная ширина картинки
+            # Real image width.
             self.image_w = self._link_bytes(f.read(4))
-            # Реальная высота картинки
+            # Real image height
             self.image_h = self._link_bytes(f.read(4))
         else:
             self.close()
-            raise(BMPError('Формат не поддерживается'))
+            raise(BMPError('The format is not supported'))
 
     def close(self):
         """
-        Метод закрывает файловый поток растрового изображения.
-        Не забывайте его вызывать, если изображение уже не понадобится.
+        The method closes font file stream.
+        Don't for get to coll it when font is not needed.
         """
         if self.file:
             self.file.close()
@@ -122,23 +119,23 @@ class BMP(object):
 
     def width(self):
         """
-        Реальная ширина растрового изображения.
+        Real image width.
         """
-        if not self.file: raise(BMPError('Файл не открыт'))
+        if not self.file: raise(BMPError('The file is not opened'))
         return(self.image_w)
 
     def height(self):
         """
-        Реальная высота растрового изображения.
+        Real image height.
         """
-        if not self.file: raise(BMPError('Файл не открыт'))
+        if not self.file: raise(BMPError('The file is not opened'))
         return(abs(self.image_h))
 
     def pixel(self, x, y):
         """
-        Метод возвращает значение пикселя изображения по указаным координатам X, Y.
+        The method returns image pixel value by pointed coordinats X, Y.
         """
-        if not self.file: raise(BMPError('Файл не открыт'))
+        if not self.file: raise(BMPError('The file is not opened'))
         
         if 0 > x > self.image_w - 1:
             return 0
@@ -208,7 +205,7 @@ class BMP(object):
         return(b)
 
 """
-Класс исключения для BMP декодера.
+Exception class for BMP decoder.
 """
 class BMPError(Exception):
     def __init__(self, value):

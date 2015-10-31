@@ -1,19 +1,18 @@
 """
-Класс для работы с монохромными графическими экранами.
+The class for work with graphic screen.
 Copyright (c) 2015, Moklyak Alexandr.
 
-Работа с геометрическими примитивами и текстом выполняется в видеобуфере.
-После окончания необходимых графических действий необходимо вызвать метод
-show() который выполнит обновление экрана согласно данными видеобуфера.
-В конструкторе класса необходимо указать экземпляр класса драйвера Вашего
-экрана с предварительной настройкой портов взаимодействия с pyboard.
-Также есть необязательный параметр flip. Его следует использовать в случаях,
-когда конструктивно необходимо установить экран в корпусе верх ногами.
-Если flip = True, то вся графическая информация поступающая в видеобуфер
-будет переворачиваться на 180 градусов.
+Using the geometric primitives and the text is done in the video buffer. After
+completing the necessary graphics must call the action show () which will
+update the screen data according to the video buffer. The class constructor
+must specify an instance of your driver screen preset ports communicate with
+pyboard. There is also an optional flip. It should be used in cases
+constructively when you need to install the screen in the housing upside down.
+If the flip = True, the entire image information supplied to the video buffer
+will be rotated 180 degrees.
 
-Пример демонстрирует подключение к экрану от мобильного телефона Trium Mars
-и отрисовка линии с использовании программной эмуляции SPI порта:
+This example demonstrates the connection to the screen of a mobile phone
+Trium Mars and drawing lines with the use of software emulation SPI port:
 >>> from lcd import LCD
 >>> from lcddrv import TriumMars
 >>> from lcddrv import SoftSPI
@@ -22,8 +21,8 @@ show() который выполнит обновление экрана сог�
 >>> l.line(1, 1, 50, 50)
 >>> l.show()
 
-Пример демонстрирует подключение к экрану от мобильного телефона Trium Mars
-и отрисовка линии с использовании аппаратного SPI порта:
+This example demonstrates the connection to the screen of a mobile phone
+Trium Mars and drawing lines with hardware SPI ports:
 >>> from lcd import LCD
 >>> from lcddrv import TriumMars
 >>> from pyb import SPI
@@ -33,8 +32,8 @@ show() который выполнит обновление экрана сог�
 >>> l.line(1, 1, 50, 50)
 >>> l.show()
 
-Более сложный пример отрисовки в бесконечном цыкле. Используется отрисовка
-прямоугольника, линии, очистка экрана и определение покрашен ли пиксель:
+A more complex example of drawing in an infinite loop. used drawing rectangle,
+line, clearing the screen and determining whether the pixel is painted:
 >>> import math
 >>> from lcd import LCD
 >>> from lcddrv import TriumMars
@@ -56,11 +55,10 @@ show() который выполнит обновление экрана сог�
 >>>     i += math.pi / 18
 >>>     pyb.delay(50)
 
-ПРИМЕЧАНИЕ: Тесты производительности показали, что использование аппаратного
-SPI порта ускоряет более чем в два раза отрисовку изображений. Но поскольку
-количество их окраничено, а расположение фиксировано, то программная эмуляция
-порта является вполне удовлетворительной альтернативой.
-
+NOTE: Performance tests have shown that rendering of images is speeded more
+than twice when the hardware SPI port is used. However, since its number
+is limited, and the location is fixed, the software emulation of port is a
+quite satisfying alternative.
 """
 
 import math
@@ -76,17 +74,18 @@ class LCD(object):
 
     def show(self):
         """
-        Отправляет видеобуфер в экран. Метод не вызывается автоматически.
-        После серии изменений видеобуфера этот метод нужно вызвать, что бы
-        изменения отобразились на экране.
+        It sends the video buffer to the screen. The method is not called
+        automatically.
+        After a series of changes to the video buffer, this method needs to be
+        called, so that changes would appear on the screen.
         """
         self.driver.send(self.canvas)
 
     def contrast(self, percent = -1):
         """
-        Метод позволяет задать контрастность экрана. Параметр percent - это
-        число в диапазоне от 1-100. Если параметр не задан, то метод возвращает
-        ранее установленое значение контрастности.
+        The method allows to set the screen contrast. Parameter percent - is
+        a number between 1-100. If not specified, the method returns to the
+        previously set contrast.
         """
         if percent >= 0:
             if percent > 100:
@@ -98,30 +97,33 @@ class LCD(object):
 
     def clear(self):
         """
-        Метод выполняет очистку видеобуфера.
+        The method clears the video buffer.
         """
         for i in range(len(self.canvas)):
             self.canvas[i] = 0
 
     def width(self):
         """
-        Метод возвращает ширину отображаемой области экрана в пикселях.
+        The method returns the width of the displayed area of the screen in
+        pixels.
         """
         return(self.driver.SCREEN_W)
 
     def height(self):
         """
-        Метод возвращает высоту отображаемой области экрана в пикселях.
+        The method returns the height of the displayed area of the screen in
+        pixels.
         """
         return(self.driver.SCREEN_H)    
 
     def pixel(self, x, y, v = None):
         """
-        Метод позволяет записать в видеобуфер значение пикселя с координатами
-        X, Y или получить по этим координатам записаное ранее значение пикселя.
-        Если указан параметр V (1 или 0) то выполняется запись в видеобуфер
-        значения пикселя. Если параметр V не указан, то метод возвращает
-        значение пикселя.
+        The method allows to record video buffer value of a pixel with
+        coordinates X, Y, or receive pixel value information recorded by these
+        coordinates previously.
+        If the option V (1 or 0) then the pixel value is recorded to the video
+        buffer.
+        If the parameter V is not specified, then method returns pixel value.
         """
         if self.flip:
             x = self.width() - x - 1
@@ -130,9 +132,9 @@ class LCD(object):
         if x < 0 or x > self.width() - 1: return(0)
         if y < 0 or y > self.height() - 1: return(0)
 
-        l = y // 8 # Строка в контроллере экрана
-        bi = self.driver.CHIP_W * l + x # Номер байта в canvas
-        c = 1 << (y - (l * 8)) # Бит байта контроллера экрана
+        l = y // 8 # A line screen controller
+        bi = self.driver.CHIP_W * l + x # Byte number in canvas
+        c = 1 << (y - (l * 8)) # Bit of the screen controller byte
 
         if v == 1:
             self.canvas[bi] |= c
@@ -148,8 +150,8 @@ class LCD(object):
 
     def line(self, x1, y1, x2, y2):
         """
-        Метод отрисовывает в видеобуфере линию между точками X1, Y1 и X2, Y2
-        по алгоритму Брезенхема.
+        The method is drawing a line in video buffer between points X1, Y1 и
+        X2, Y2 by Bresenham's line algorithm.
         """
         dx = abs(x2 - x1)
         dy = abs(y2 - y1)
@@ -186,9 +188,10 @@ class LCD(object):
                     
     def rect(self, x1, y1, x2, y2, solid = False):
         """
-        Метод отрисовывает прямоугольник с координатами X1, Y1, X2, Y2.
-        Параметр solid позволяет указать закрашивать ли прямоугольник.
-        Если параметр указан True или 1, то прямоугольник будет закрашен.
+        The method draws a rectangle with coordinates X1, Y1, X2, Y2.
+        The solid parameter allows to specify whether to paint over a rectangle.
+        If the parameter is specified either True or 1, then the rectangle will
+        be painted over.
         """
         for x in range(x1, x2 + 1):
             self.pixel(x, y1, 1)
@@ -204,7 +207,7 @@ class LCD(object):
 
     def clear_rect(self, x1, y1, x2, y2):
         """
-        Метод очищает область экрана прямоугольной формы с координатами
+        Method clears a rectangular shaped part of the screen with coordinates
         X1, Y1, X2, Y2.
         """
         for y in range(y1, y2):
@@ -213,9 +216,11 @@ class LCD(object):
 
     def circle(self, x, y, r, solid = False):
         """
-        Метод отрисовывает круг по алгоритму Брезенхема с координатами центра
-        X, Y и радиуом R. Параметр solid позволяет указать закрашивать ли круг.
-        Если параметр указан True или 1, то круг будет закрашен.
+        The method draws a circle by Bresenham's algorithm with center
+        coordinates X, Y and radius R. Parameter solid allows you to specify
+        whether the circle is painted.
+        If the parameter is specified either True or 1, then the circle will
+        be painted over.
         """
         px = 0
         py = r
@@ -247,10 +252,10 @@ class LCD(object):
                 
     def calc_text_size(self, text, font):
         """
-        Метод выполняет расчет прямоугольной области, которую будет занимать
-        текст при выводе. Возвращает кортеж (ширина, высота).
-        text - измеряемый текст
-        font - экземпляр класса Font
+        The method calculates a rectangular area, which will take the text in
+        the output. It returns a tuple (width, height).
+        text - measured text
+        font - instance of class Font
         """
         w = 0
         for c in text:
@@ -259,22 +264,23 @@ class LCD(object):
 
     def text(self, x, y, text, font, wrap = False, inv = False):
         """
-        Метод выполняет вывод текстовой строки в начиная с указанной позиции.
-        text - отображаемый на экране текст
-        font - экземпляр класса Font
-        wrap - указывает выполнять ли посимвольный перенос текст при достижении
-               границы экрана. Если True, то текст, который не помещается в
-               экран будет перенесен на новую строку начиная с прежней
-               горизонтальной позицией.
-               Если False, то текст будет отображаться до края экрана, а лишний
-               будет обрезан.
-        inv - Если True или 1, то текст будет выведен в инвертированом виде.
+        The method performs the output of a text line starting at a specified
+        position.
+        text - displayed text
+        font - instance of class Font
+        wrap - specifies whether to perform character-oriented text wrapping
+               when reaching the edge of the screen. If True, then the text
+               that does not fit in the screen will be moved to a new line
+               starting with the same horizontal position.
+               If False, the text will be displayed to the edge of the screen,
+               and other will be cut off.
+        inv - If True or 1, then text will be displayed in invert mode.
         """
         cx = x
         h = font.height
         for c in text:
             o = ord(c)
-            if o > 0xff: # Переводим кириллицу Unicode в ASCII
+            if o > 0xff: # Translate Cyrillic Unicode to ASCII
                 o -= 848
             if o > 255:
                 o = 32
@@ -299,9 +305,10 @@ class LCD(object):
 
     def image(self, x, y, image, inv = False):
         """
-        Метод выполняет отрисовку растрового изображения в указаную позицию.
-        image - экземпляр растрового изображения
-        inv - Если True или 1, то изображение будет выведено в инвертированом виде.
+        The method performs the drawing of raster Image to the specifyed
+        position
+        image - instance of raster Image
+        inv - If True or 1, then image will be inverted.
         """
         for ky in range(image.height()):
             for kx in range(image.width()):

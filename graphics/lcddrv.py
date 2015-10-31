@@ -1,13 +1,13 @@
 """
-Набор драйверов для работы с монохромными жидкокристалическими экранами.
+A set of drivers to work with liquid cristal screens.
 Copyright (c) 2015, Moklyak Alexandr.
 
-Экраны телефонов, которые поддерживаются:
+
+Phones screens that are supported:
     - Mitsubishi TiumMars
     - Nokia 3210
     - Nokia 5210
-
-    - Nokia 1110i * Не проверено
+    - Nokia 1110i *not checked
 """
 
 import pyb
@@ -38,7 +38,7 @@ class SoftSPI(object):
                 clk_value(1)
     
 """
-Драйвер для экрана телефона Mitsubishi Tium Mars
+The driver for screen of Mitsubishi Tium Mars phone.
 """
 class TriumMars(object):
     CHIP_W = 102
@@ -64,13 +64,13 @@ class TriumMars(object):
 
         # Init
         self.dc_value(0)
-        self.spi.send(0x21) # расшир. команды
-        self.spi.send(0x9f) # напряжение на жк
-        self.spi.send(0x06) # температурный коэф
-        self.spi.send(0x15) # BIAS (смещение-общая тёмность)
-        self.spi.send(0x20) # обычный набор инструкций
-        self.spi.send(0x0c) # нормальный режим отображения D=1 E=0 (&h0d- инверсный режим)
-        self.spi.send(0x1b) # без этого не работает -изюминка
+        self.spi.send(0x21) # LCD Extended Commands.
+        self.spi.send(0x9f) # Set LCD Vop
+        self.spi.send(0x06) # Set Temp coefficent.
+        self.spi.send(0x15) # BIAS
+        self.spi.send(0x20) # LCD Standard Commands
+        self.spi.send(0x0c) # LCD in normal mode D=1 E=0 (&h0d- invert)
+        self.spi.send(0x1b)
         self.dc_value(1)
         
     def send(self, data):
@@ -95,13 +95,13 @@ class TriumMars(object):
 
     def contrast(self, value):
         self.dc_value(0)
-        self.spi.send(0x21) # расшир. команды
-        self.spi.send(value) # BIAS (смещение-общая тёмность)
-        self.spi.send(0x20) # обычный набор инструкций
+        self.spi.send(0x21) # LCD Extended Commands.
+        self.spi.send(value) # BIAS
+        self.spi.send(0x20) # LCD Standard Commands
         self.dc_value(1)
 
 """
-Драйвер для экранов с контроллером PCD8544 и их аналогов.
+Driver screen controller PCD8544 and their analogues.
 """
 class PCD8544(object):
     CHIP_W = 84
@@ -149,18 +149,18 @@ class PCD8544(object):
 
     def contrast(self, value):
         self.dc_value(0)
-        self.spi.send(0x21) # расшир. команды
-        self.spi.send(0x10 + round(6 * value / 100)) # BIAS (смещение-общая тёмность)
-        self.spi.send(0x20) # обычный набор инструкций
+        self.spi.send(0x21) # LCD Extended Commands.
+        self.spi.send(0x10 + round(6 * value / 100)) # BIAS
+        self.spi.send(0x20) # LCD Standard Commands.
         self.dc_value(1)
 
 """
-Драйвер для экранов телефона Nokia 3210.
+The driver for screen of Nokia 3210 phone.
 """
 class N3210(PCD8544): pass
 
 """
-Драйвер для экранов телефона Nokia 5210.
+The driver for screen of Nokia 5210 phone.
 """
 class N5210(PCD8544):
     def send(self, data):
@@ -183,7 +183,7 @@ class N5210(PCD8544):
         self.spi.send(0x7f - round(0xf * value / 100)) # BIAS (смещение-общая тёмность)
 
 """
-Драйвер для экранов телефона Nokia 1110i.
+The driver for screen of Nokia 1110i phone. Not checked
 """
 class N1110i(object):
     CHIP_W = 96
@@ -224,5 +224,5 @@ class N1110i(object):
         self.spi.send(0x0)
 
     def contrast(self, value):
-        self.spi.send((0x80 + round(0x1f / 100 * value) << 1)) # BIAS (смещение-общая тёмность)
+        self.spi.send((0x80 + round(0x1f / 100 * value) << 1)) # BIAS
         self.spi.send(0x0)
