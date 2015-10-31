@@ -30,7 +30,7 @@ class Font(object):
         if not self.file:
             self.file = open(self.fileName, 'rb')
             self.file.seek(31)
-            self.height = self.file.read(1)[0] # Читаем высоту шрифта
+            self.height = self.file.read(1)[0] # Read font height
 
     def close(self):
         """
@@ -46,7 +46,7 @@ class Font(object):
         Returns back tuple (position, width).
         """
         f = self.file
-        # Смещаемся в потоке на нужный символ
+        # Offset to the stream to the desired character
         f.seek(32 + c * 3)
         p = f.read(3)
         x = (p[1] << 8) + p[0]
@@ -61,10 +61,10 @@ class Font(object):
         cs = self.char_size(c)        
         bh = math.ceil(self.height / 8)
         f = self.file
-        # Смещаемся в потоке на нужный символ
+        # Offset to the stream to the desired character
         f.seek(32 + 256 * 3 + cs[0] * bh)
         res = []
-        # Читаем нужный символ
+        # Read char
         for x in range(cs[1]):
             b = 0
             for y in range(bh):
