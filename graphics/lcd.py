@@ -259,7 +259,12 @@ class LCD(object):
         """
         w = 0
         for c in text:
-            w += font.char_size(ord(c))[1]
+            o = ord(c)
+            if o > 0xff: # Translate Cyrillic Unicode to ASCII
+                o -= 848
+            if o > 255:
+                o = 32
+            w += font.char_size(o)[1]
         return(w, font.height)
 
     def text(self, x, y, text, font, wrap = False, inv = False):
