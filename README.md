@@ -1,1 +1,1 @@
-Automated control system for residental building.
+The micropython libraries and utilites.
