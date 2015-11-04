@@ -265,7 +265,7 @@ class LCD(object):
             if o > 255:
                 o = 32
             w += font.char_size(o)[1]
-        return(w, font.height)
+        return(w, font.height())
 
     def text(self, x, y, text, font, wrap = False, inv = False):
         """
@@ -282,7 +282,7 @@ class LCD(object):
         inv - If True or 1, then text will be displayed in invert mode.
         """
         cx = x
-        h = font.height
+        h = font.height()
         for c in text:
             o = ord(c)
             if o > 0xff: # Translate Cyrillic Unicode to ASCII

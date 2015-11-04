@@ -29,8 +29,7 @@ class Font(object):
         """
         if not self.file:
             self.file = open(self.fileName, 'rb')
-            self.file.seek(31)
-            self.height = self.file.read(1)[0] # Read font height
+            self.header = self.file.read(32)
 
     def close(self):
         """
@@ -45,9 +44,17 @@ class Font(object):
         The method reads from font file header raster position and symbol width.
         Returns back tuple (position, width).
         """
+        cFrom = self.header[29]
+        cTo = self.header[30]
+        
+        if c < cFrom:
+            c = cFrom
+        if c > cTo:
+            c = cTo
+            
         f = self.file
         # Offset to the stream to the desired character
-        f.seek(32 + c * 3)
+        f.seek(32 + (c - cFrom) * 3)
         p = f.read(3)
         x = (p[1] << 8) + p[0]
         w = p[2]
@@ -58,11 +65,20 @@ class Font(object):
         The method is for getting symbol image.
         Returns back bit masks list for font drawing.
         """
+        cFrom = self.header[29]
+        cTo = self.header[30]
+        height = self.header[31]
+
+        if c < cFrom:
+            c = cFrom
+        if c > cTo:
+            c = cTo        
+        
         cs = self.char_size(c)        
-        bh = math.ceil(self.height / 8)
+        bh = math.ceil(height / 8)
         f = self.file
         # Offset to the stream to the desired character
-        f.seek(32 + 256 * 3 + cs[0] * bh)
+        f.seek(32 + (cTo - cFrom + 1) * 3 + cs[0] * bh)
         res = []
         # Read char
         for x in range(cs[1]):
@@ -71,4 +87,10 @@ class Font(object):
                 r = f.read(1)
                 b |= r[0] << (y * 8)
             res.append(b)
-        return(res)
+        return res
+
+    def height(self):
+        """
+        The method is for getting symbol height.
+        """
+        return self.header[31]
