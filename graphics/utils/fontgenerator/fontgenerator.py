@@ -1,11 +1,13 @@
+#!/usr/bin/python3
+
 """
-Утилита для генерации файла шрифта. Входит в состав графической библиотеки
-микропитона.
+The utility to create fonts. Is included in the graphic library for
+micropython board.
 Copyright (c) 2015, Moklyak Alexandr.
 
-Утилита использует библиотеку PyQt5.
-Есть возможность использовать ограниченые ASCII таблицы исключая ненужные
-символы.
+The utility is using PyQt5 library.
+There is a possibility to use limited ASCII tables excluding unnessesery
+symbols.
 """
 
 import sys
