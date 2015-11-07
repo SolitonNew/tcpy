@@ -33,6 +33,7 @@ class FontGenerator(QWidget):
         self._createUI()
 
         self.selectedChar = 1
+        self.hoverChar = 1
         self.buildCharList()        
         
         self.show()
@@ -43,6 +44,8 @@ class FontGenerator(QWidget):
         fontSize = QSpinBox(self)
         chars = ClickableLabel(self)
         chars.topWidget = self
+        chars.setMouseTracking(True)
+        chars.setCursor(Qt.PointingHandCursor)
         charScroller = QScrollArea(self)        
         charScroller.setWidget(chars)        
         charPreview = QLabel(self)
@@ -157,6 +160,9 @@ class FontGenerator(QWidget):
         f.close()
 
     def buildCharList(self):
+        hoverColor = 0xcccccc
+        selectedColor = 0x999999
+        
         cFrom = self.charFrom.value()
         cTo = self.charTo.value() + 1
 
@@ -197,10 +203,27 @@ class FontGenerator(QWidget):
         cf.setStyleStrategy(QFont.NoAntialias)
         p.setFont(cf)
         for c in range(cFrom, cTo):
+            rc = c - cFrom
+            
+            if self.hoverChar == c:
+                p.setBrush(QBrush(QColor(hoverColor), Qt.SolidPattern))
+                p.setPen(QColor(hoverColor))
+                p.drawRect(self.charSizes[rc][0], 0, self.charSizes[rc][1] - 1, pix.height() - 1)
+
+            if self.selectedChar == c:
+                p.setBrush(Qt.NoBrush)
+                p.setPen(QColor(selectedColor))
+                p.drawRect(self.charSizes[rc][0], 0, self.charSizes[rc][1] - 1, pix.height() - 1)
+
+            if self.hoverChar != c and self.selectedChar != c:
+                p.setBrush(QBrush(QColor(0xffffff), Qt.SolidPattern))
+
+            p.setPen(QColor(0x0))
+
             s = chr(c)
             if c > 0x7e:
                 s = chr(c + 848)
-            rc = c - cFrom
+            
             p.drawText(QRect(self.charSizes[rc][0],
                              0,
                              self.charSizes[rc][1],
@@ -246,18 +269,31 @@ class FontGenerator(QWidget):
 
 
 class ClickableLabel(QLabel):
-    def mousePressEvent(self, event):
+    def _check_mouse_pos(self, x):
         parent = self.topWidget
         cFrom = parent.charFrom.value()
         cTo = parent.charTo.value() + 1
-        x = event.localPos().x()
         for c in range(cFrom, cTo):
             rc = c - cFrom
             if x >= parent.charSizes[rc][0] and x < parent.charSizes[rc][0] + parent.charSizes[rc][1]:
-                parent.selectedChar = c
-                parent.buildCharPreview()
-                break
+                return c
+        return 0
             
+    def mousePressEvent(self, event):
+        parent = self.topWidget
+        parent.selectedChar = self._check_mouse_pos(event.localPos().x())
+        parent.buildCharList()
+        parent.buildCharPreview()
+
+    def mouseMoveEvent(self, event):
+        parent = self.topWidget
+        parent.hoverChar = self._check_mouse_pos(event.localPos().x())
+        parent.buildCharList()
+
+    def leaveEvent(self, event):
+        parent = self.topWidget
+        parent.hoverChar = 0
+        parent.buildCharList()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
