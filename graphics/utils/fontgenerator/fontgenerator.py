@@ -234,7 +234,7 @@ class FontGenerator(QWidget):
 
         # Calc statistics
         size = (32 + (cTo - cFrom + 1) * 3 + all_w * math.ceil(all_h / 8)) / 1000
-        s = 'Line height: %dpx  |  Count symbols: %d  |  File size: %3.1fkb' % (all_h, 256, size)
+        s = 'Line height: %dpx  |  Count symbols: %d  |  File size: %3.1fkb' % (all_h, (cTo - cFrom), size)
         self.bottomLabel.setText(s)
 
     def buildCharPreview(self):        
