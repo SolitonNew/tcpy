@@ -67,7 +67,7 @@ class TriumMars(object):
         self.spi.send(0x21) # LCD Extended Commands.
         self.spi.send(0x9f) # Set LCD Vop
         self.spi.send(0x06) # Set Temp coefficent.
-        self.spi.send(0x15) # BIAS
+        #self.spi.send(0x15) # BIAS
         self.spi.send(0x20) # LCD Standard Commands
         self.spi.send(0x0c) # LCD in normal mode D=1 E=0 (&h0d- invert)
         self.spi.send(0x1b)
@@ -96,7 +96,7 @@ class TriumMars(object):
     def contrast(self, value):
         self.dc_value(0)
         self.spi.send(0x21) # LCD Extended Commands.
-        self.spi.send(value) # BIAS
+        self.spi.send(0x10 + round(6 * value / 100)) # BIAS
         self.spi.send(0x20) # LCD Standard Commands
         self.dc_value(1)
 

@@ -315,11 +315,18 @@ class LCD(object):
         image - instance of raster Image
         inv - If True or 1, then image will be inverted.
         """
-        for ky in range(image.height()):
-            for kx in range(image.width()):
-                if inv:
-                    if not image.pixel(kx, ky):
-                        self.pixel(x + kx, y + ky, 1)
-                else:
-                    if image.pixel(kx, ky):
-                        self.pixel(x + kx, y + ky, 1)
+
+        kx, ky = 0, 0
+        for b in image.all_pixels():
+            if kx >= image.width() - 1:
+                ky += 1
+                kx = 0
+            else:
+                kx += 1
+
+            if inv:
+                if not b:
+                    self.pixel(x + kx, y + ky, 1)
+            else:
+                if b:
+                    self.pixel(x + kx, y + ky, 1)
