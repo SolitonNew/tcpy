@@ -1,5 +1,5 @@
 """
-The class for work with graphic screen.
+The module is top level API for work with graphic LCD displays.
 Copyright (c) 2015, Moklyak Alexandr.
 
 Using the geometric primitives and the text is done in the video buffer. After
@@ -64,6 +64,9 @@ quite satisfying alternative.
 import math
 
 class LCD(object):
+    """
+    The class is top level API for work with graphic LCD displays.
+    """
     def __init__(self, driver, flip = False):
         self.driver = driver
         self.flip = flip
@@ -308,25 +311,25 @@ class LCD(object):
                             self.pixel(cx, y + i, 1)
                 cx += 1
 
-    def image(self, x, y, image, inv = False):
+    def image(self, x, y, pixelArray, inv = False):
         """
         The method performs the drawing of raster Image to the specifyed
         position
-        image - instance of raster Image
+        pixelArray - The instance of the pixels container as PixelArray.
         inv - If True or 1, then image will be inverted.
         """
 
         kx, ky = 0, 0
-        for b in image.all_pixels():
-            if kx >= image.width() - 1:
-                ky += 1
-                kx = 0
-            else:
-                kx += 1
-
+        for b in pixelArray.pixels():
             if inv:
                 if not b:
                     self.pixel(x + kx, y + ky, 1)
             else:
                 if b:
                     self.pixel(x + kx, y + ky, 1)
+
+            kx += 1
+                    
+            if kx >= pixelArray.width():
+                ky += 1
+                kx = 0

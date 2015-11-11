@@ -1,14 +1,62 @@
 """
-The class is a raster image decoder.
+The module for raster image decoding.
 Copyright (c) 2015, Moklyak Alexandr.
 
 Image information is read from directly, and not cashing.
+If your need read all information of pixels then need use pixels() method.
+Result the function is instance of PixelArray class. You can save this pixel
+information and close image file.
+EXAMPLE:
+>>> from image import BMP
+>>> bmp = BMP('images/lcd24.bmp'
+>>> all_pixels = bmp.pixels()
+>>> bmp.close()
+
+If your need read only some parts of the picture then use pixel(x, y).
+Pointing to the coordinates of the pixel you get as a result of the RGB value.
+EXAMPLE:
+>>> from image import BMP
+>>> pix = BMP('images/lcd24.bmp').pixel(1, 1)
 """
 
 import math
 import array
 
+
+class PixelArray(object):
+    """
+    This class is a container of pixels. Used for storing image information
+    is an image file.
+    """
+    def __init__(self, w, h, pixels):
+        self.w = w
+        self.h = h
+        self.data = pixels
+
+    """
+    The method is returns the width of image.
+    """
+    def width(self):
+        return self.w
+
+    """
+    The method is returns the height of image.
+    """
+    def height(self):
+        return self.h
+
+    """
+    The method is returns the pixels data of image. The data represented as
+    array of int.
+    """
+    def pixels(self):
+        return self.data
+
+
 class BMP(object):
+    """
+    The class is decoder of files in BMP fromat.
+    """
     def __init__(self, fileName):
         self.file = None
         self.fileName = fileName
@@ -209,39 +257,41 @@ class BMP(object):
         b = self._link_bytes(f.read(4))
         return(b)
 
-    def all_pixels(self):
+    def pixels(self):
         """
-        The method returns all image pixels as bytearray in monochrome format.
+        Result the function is instance of PixelArray class.
         """
         if not self.file: raise(BMPError('The file is not opened'))        
         
         if self.bits == 1:
-            return(self._all_pixels_1())
+            ba = self._pixels_1()
         elif self.bits == 4:
-            return(self._all_pixels_4())
+            ba = self._pixels_4()
         elif self.bits == 8:
-            return(self._all_pixels_8())
+            ba = self._pixels_8()
         elif self.bits == 16:
-            return(self._all_pixels_16())
+            ba = self._pixels_16()
         elif self.bits == 24:
-            return(self._all_pixels_24())
+            ba = self._pixels_24()
         elif self.bits == 32:
-            return(self._all_pixels_32())
+            ba = self._pixels_32()
 
-    def _all_pixels_1(self):
+        return(PixelArray(self.width(), self.height(), ba))
+
+    def _pixels_1(self):
         f = self.file
         masks = ((1<<7), (1<<6), (1<<5), (1<<4), (1<<3), (1<<2), (1<<1), (1<<0))
-        ba = bytearray(self.width() * self.height())
+        ba = array.array('i', range(self.width() * self.height()))
         f.seek(self.dataOff)
         lineSize = math.ceil(self.width() / 32) * 4
-        for y in range(self.height()):
+        for y in range(self.height() - 1, -1, -1):
             line = f.read(lineSize)
             x = 0
             x8 = 0
             for bx in line:
                 for b in range(8):
-                    if (x8 < self.width()):
-                        i = (self.height() - y - 1) * self.width() + x8 + b
+                    if (x8 + b < self.width()):
+                        i = y * self.width() + x8 + b
                         if line[x] & masks[b]:
                             ba[i] = 1
                         else:
@@ -251,92 +301,101 @@ class BMP(object):
                 x8 += 8
         return ba
 
-    def _all_pixels_4(self):
+    def _pixels_4(self):
         f = self.file
         masks = (0b00001111, 0b11110000)
         ba = array.array('i', range(self.width() * self.height()))
         f.seek(self.dataOff)
-        lineSize = math.ceil(self.width() / 32) * 16
-        for y in range(self.height()):
+        lineSize = math.ceil(self.width() / 8) * 4
+        for y in range(self.height() - 1, -1, -1):
             line = f.read(lineSize)
             x = 0
-            x2 = 0
-            for bx in line:
-                for b in range(2):
-                    if (x2 < self.width()):
-                        i = (self.height() - y - 1) * self.width() + x2 + 1 - b
-                        byte = line[x] & masks[b]
-                        if b == 0:
-                            ba[i] = self.palette[byte]
-                        else:
-                            ba[i] = self.palette[byte >> 4]
-                        i += 1
-                x += 1
-                x2 += 2
+            for byte in line:
+                for bn in range(1, -1, -1):
+                    if x < self.width():
+                        c = byte & masks[bn]
+                        if bn:
+                            c >>= 4
+                        i = y * self.width() + x
+                        ba[i] = self.palette[c]
+                    x += 1
+                
         return ba
 
-    def _all_pixels_8(self):
+    def _pixels_8(self):
         f = self.file
         f.seek(self.dataOff)
         ba = array.array('i', range(self.width() * self.height()))
-        fb = f.read(len(ba))
-
-        i = 0
-        for y in range(self.height()):
+        lineSize = math.ceil(self.width() / 4) * 4
+        for y in range(self.height() - 1, -1, -1):
+            line = f.read(lineSize)
             for x in range(self.width()):
-                fi = ((self.height() - y - 1) * self.width() + x)
-                ba[i] = self.palette[fb[fi]]
-                i += 1
+                if x < self.width():
+                    ba[y * self.width() + x] = self.palette[line[x]]
         return ba
 
-    def _all_pixels_16(self):
+    def _pixels_16(self):
         f = self.file
         f.seek(self.dataOff)
+        lineSize = math.ceil(self.width() / 2) * 2
         ba = array.array('i', range(self.width() * self.height()))
-        fb = f.read(len(ba) * 2)
-
-        i = 0
-        for y in range(self.height()):
+        for y in range(self.height() - 1, -1, -1):           
             for x in range(self.width()):
-                fi = ((self.height() - y - 1) * self.width() + x) * 2
+                fb = self._link_bytes(f.read(2))
                 if self.palette:
-                    ba[i] = self.palette[self._link_bytes((fb[fi], fb[fi + 1]))]
+                    ba[y * self.width() + x] = self.palette[fb]
                 else:
-                    ba[i] = self._link_bytes((fb[fi], fb[fi + 1]))
-                i += 1
+                    ba[y * self.width() + x] = fb
+            if self.width() < lineSize:
+                f.read(2)
         return ba
 
-    def _all_pixels_24(self):
+    def _pixels_24(self):
         f = self.file
         f.seek(self.dataOff)
+        lineSize = math.ceil(self.width() * 3 / 4) * 4
         ba = array.array('i', range(self.width() * self.height()))
-        fb = f.read(len(ba) * 3)
-        i = 0
-        for y in range(self.height()):
+        for y in range(self.height() - 1, -1, -1):
             for x in range(self.width()):
-                fi = ((self.height() - y - 1) * self.width() + x) * 3
-                ba[i] = self._link_bytes((fb[fi], fb[fi + 1], fb[fi + 2]))
-                i += 1
+                fb = f.read(3)
+                ba[y * self.width() + x] = self._link_bytes(fb)
+
+            c = lineSize - self.width() * 3
+            if c > 0:
+                f.read(c)
         return ba
 
-    def _all_pixels_32(self):
+    def _pixels_32(self):
         f = self.file
-        f.seek(self.dataOff)
+        f.seek(self.dataOff)        
         ba = array.array('i', range(self.width() * self.height()))
-        fb = f.read(len(ba) * 4)
-        i = 0
-        for y in range(self.height()):
+        for y in range(self.height() - 1, -1, -1):
             for x in range(self.width()):
-                fi = ((self.height() - y - 1) * self.width() + x) * 4
-                ba[i] = self._link_bytes((fb[fi], fb[fi + 1], fb[fi + 2]))
-                i += 1
+                fb = f.read(3)
+                f.read(1)
+                ba[y * self.width() + x] = self._link_bytes(fb)
         return ba
 
-"""
-Exception class for BMP decoder.
-"""
+
 class BMPError(Exception):
+    """
+    Exception class for BMP decoder.
+    """
     def __init__(self, value):
         self.value = value
     def __str__(self):
         return self.value
+
+
+"""
+pix = BMP('images/main.bmp').pixels()
+line = []
+for b in pix.pixels():
+    if b:
+        line += ['*']
+    else:
+        line += [' ']
+    if len(line) >= pix.width():
+        print(str().join(line))
+        line = []
+"""

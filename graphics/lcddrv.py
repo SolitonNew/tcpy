@@ -2,7 +2,6 @@
 A set of drivers to work with liquid cristal screens.
 Copyright (c) 2015, Moklyak Alexandr.
 
-
 Phones screens that are supported:
     - Mitsubishi TiumMars
     - Nokia 3210
@@ -14,6 +13,9 @@ import pyb
 import math
 
 class SoftSPI(object):
+    """
+    The class is software emulator of SPI protocol.
+    """
     def __init__(self, pin_data, pin_clk, polarity=0, bits=8):
         self.data_value = pyb.Pin(pin_data, pyb.Pin.OUT_PP).value
         self.clk_value = pyb.Pin(pin_clk, pyb.Pin.OUT_PP).value
@@ -37,10 +39,10 @@ class SoftSPI(object):
                 b <<= 1
                 clk_value(1)
     
-"""
-The driver for screen of Mitsubishi Tium Mars phone.
-"""
 class TriumMars(object):
+    """
+    The driver for screen of Mitsubishi Tium Mars phone.
+    """
     CHIP_W = 102
     CHIP_H = 65
     SCREEN_W = 96
@@ -100,10 +102,10 @@ class TriumMars(object):
         self.spi.send(0x20) # LCD Standard Commands
         self.dc_value(1)
 
-"""
-Driver screen controller PCD8544 and their analogues.
-"""
 class PCD8544(object):
+    """
+    Driver screen controller PCD8544 and their analogues.
+    """
     CHIP_W = 84
     CHIP_H = 48
     SCREEN_W = 84
@@ -154,15 +156,16 @@ class PCD8544(object):
         self.spi.send(0x20) # LCD Standard Commands.
         self.dc_value(1)
 
-"""
-The driver for screen of Nokia 3210 phone.
-"""
-class N3210(PCD8544): pass
+class N3210(PCD8544):
+    """
+    The driver for screen of Nokia 3210 phone.
+    """
+    pass
 
-"""
-The driver for screen of Nokia 5210 phone.
-"""
 class N5210(PCD8544):
+    """
+    The driver for screen of Nokia 5210 phone.
+    """
     def send(self, data):
         spi_send = self.spi.send
         
@@ -182,10 +185,11 @@ class N5210(PCD8544):
         self.dc_value(0)
         self.spi.send(0x7f - round(0xf * value / 100)) # BIAS (смещение-общая тёмность)
 
-"""
-The driver for screen of Nokia 1110i phone. Not checked
-"""
 class N1110i(object):
+    """
+    The driver for screen of Nokia 1110i phone.
+    Not checked !!!!!!!    
+    """
     CHIP_W = 96
     CHIP_H = 68
     SCREEN_W = 96
