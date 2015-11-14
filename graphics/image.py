@@ -3,7 +3,7 @@ The module for raster image decoding.
 Copyright (c) 2015, Moklyak Alexandr.
 
 Image information is read from directly, and not cashing.
-If your need read all information of pixels then need use pixels() method.
+If your need to read all information of pixels then need use pixels() method.
 Result the function is instance of PixelArray class. You can save this pixel
 information and close image file.
 EXAMPLE:
@@ -12,7 +12,7 @@ EXAMPLE:
 >>> all_pixels = bmp.pixels()
 >>> bmp.close()
 
-If your need read only some parts of the picture then use pixel(x, y).
+If your need to read only some parts of the picture then use pixel(x, y).
 Pointing to the coordinates of the pixel you get as a result of the RGB value.
 EXAMPLE:
 >>> from image import BMP
@@ -26,7 +26,7 @@ import array
 class PixelArray(object):
     """
     This class is a container of pixels. Used for storing image information
-    is an image file.
+    of an image file.
     """
     def __init__(self, w, h, pixels):
         self.w = w
@@ -34,19 +34,19 @@ class PixelArray(object):
         self.data = pixels
 
     """
-    The method is returns the width of image.
+    The method returns the width of image.
     """
     def width(self):
         return self.w
 
     """
-    The method is returns the height of image.
+    The method returns the height of image.
     """
     def height(self):
         return self.h
 
     """
-    The method is returns the pixels data of image. The data represented as
+    The method returns the pixels data of image. The data represented as
     array of int.
     """
     def pixels(self):
@@ -55,7 +55,7 @@ class PixelArray(object):
 
 class BMP(object):
     """
-    The class is decoder of files in BMP fromat.
+    The class is decoder of files in BMP format.
     """
     def __init__(self, fileName):
         self.file = None
@@ -259,7 +259,7 @@ class BMP(object):
 
     def pixels(self):
         """
-        Result the function is instance of PixelArray class.
+        Result of this function is an instance of PixelArray class.
         """
         if not self.file: raise(BMPError('The file is not opened'))        
         
