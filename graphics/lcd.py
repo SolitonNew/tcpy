@@ -69,6 +69,11 @@ class LCD(object):
     """
     def __init__(self, driver, flip = False):
         self.driver = driver
+        self.CHIP_W = driver.CHIP_W
+        self.CHIP_H = driver.CHIP_H
+        self.SCREEN_W = driver.SCREEN_W
+        self.SCREEN_H = driver.SCREEN_H
+        
         self.flip = flip
         self.contrast(50)
         l = math.ceil(driver.CHIP_H / 8)        
@@ -110,14 +115,14 @@ class LCD(object):
         The method returns the width of the displayed area of the screen in
         pixels.
         """
-        return(self.driver.SCREEN_W)
+        return(self.SCREEN_W)
 
     def height(self):
         """
         The method returns the height of the displayed area of the screen in
         pixels.
         """
-        return(self.driver.SCREEN_H)    
+        return(self.SCREEN_H)    
 
     def pixel(self, x, y, v = None):
         """
@@ -129,14 +134,14 @@ class LCD(object):
         If the parameter V is not specified, then method returns pixel value.
         """
         if self.flip:
-            x = self.width() - x - 1
-            y = self.height() - y - 1
+            x = self.SCREEN_W - x - 1
+            y = self.SCREEN_H - y - 1
 
-        if x < 0 or x > self.width() - 1: return(0)
-        if y < 0 or y > self.height() - 1: return(0)
+        if x < 0 or x > self.SCREEN_W - 1: return(0)
+        if y < 0 or y > self.SCREEN_H - 1: return(0)
 
         l = y // 8 # A line screen controller
-        bi = self.driver.CHIP_W * l + x # Byte number in canvas
+        bi = self.CHIP_W * l + x # Byte number in canvas
         c = 1 << (y - (l * 8)) # Bit of the screen controller byte
 
         if v == 1:
@@ -200,9 +205,10 @@ class LCD(object):
             self.pixel(x, y1, 1)
             self.pixel(x, y2, 1)
         if solid:
-            for y in range(y1 + 1, y2):
-                for x in range(x1, x2 + 1):
-                    self.pixel(x, y, 1)
+            self._fill_rect(x1, y1, x2, y2, True)
+            #for y in range(y1 + 1, y2):
+            #    for x in range(x1, x2 + 1):
+            #        self.pixel(x, y, 1)
         else:
             for y in range(y1 + 1, y2):
                 self.pixel(x1, y, 1)
@@ -213,9 +219,57 @@ class LCD(object):
         Method clears a rectangular shaped part of the screen with coordinates
         X1, Y1, X2, Y2.
         """
-        for y in range(y1, y2):
+        self._fill_rect(x1, y1, x2, y2, False)
+
+    def _fill_rect(self, x1, y1, x2, y2, fillColor):
+        if self.flip:
+            x1 = self.SCREEN_W - x1 - 1
+            y1 = self.SCREEN_H - y1 - 1
+            x2 = self.SCREEN_W - x2 - 1
+            y2 = self.SCREEN_H - y2 - 1
+
+            x1, y1, x2, y2 = x2, y2, x1, y1
+        
+        l1, l2 = math.ceil(y1 / 8), math.ceil(y2 / 8)
+
+        flcTop = 0x0
+        k = 0
+        for y in range(l1 * 8, y1):
+            flcTop |= 1 << k
+            k += 1
+        flcTop = ~flcTop
+
+        flcBottom = 0x0
+        k = 0
+        for y in range((l2 - 1) * 8, y2):
+            flcBottom |= 1 << k
+            k += 1
+        
+        if fillColor:
+            flc = 0xff
+        else:
+            flc = 0x0        
+
+        k = l1 * self.CHIP_W
+        if fillColor:
             for x in range(x1, x2):
-                self.pixel(x, y, 0)
+                self.canvas[k + x] |= flcTop
+        else:
+            for x in range(x1, x2):
+                self.canvas[k + x] &= ~flcTop
+
+        for y in range(l1 + 1, l2 - 1):
+            k = y * self.CHIP_W
+            for x in range(x1, x2):
+                self.canvas[k + x] = flc
+
+        k = (l2 - 1) * self.CHIP_W
+        if fillColor:
+            for x in range(x1, x2):
+                self.canvas[k + x] |= flcBottom
+        else:
+            for x in range(x1, x2):
+                self.canvas[k + x] &= ~flcBottom
 
     def circle(self, x, y, r, solid = False):
         """
@@ -293,13 +347,16 @@ class LCD(object):
             if o > 255:
                 o = 32
             cs = font.char_size(o)
-            if cx + cs[1] > self.width():
+            if cx + cs[1] > self.SCREEN_W:
                 if wrap:
                     cx = x
                     y += h
                 else:
-                    if cx + cs[1] >= self.width() + font.char_size(32)[1]:
+                    if cx + cs[1] >= self.SCREEN_W + font.char_size(32)[1]:
                         return()
+
+            cx += self._draw_char(cx, y, o, font, inv)
+            """
             for col in font.char_data(o):
                 for i in range(h):
                     pix = col & (1 << i)
@@ -310,23 +367,96 @@ class LCD(object):
                         if pix:
                             self.pixel(cx, y + i, 1)
                 cx += 1
+            """
 
-    def image(self, x, y, pixelArray, inv = False):
+    def _draw_char(self, x, y, char, font, inv):
+        cd = font.char_data(char)
+        w = len(cd)
+        l = len(self.canvas)
+        
+        if not self.flip:
+            canvY = math.floor(y / 8)
+            dy = y - canvY * 8
+            h = math.ceil((font.height() + dy) / 8)
+
+            mask = 0x0
+            if inv:
+                for i in range(font.height()):
+                    mask |= (1<<i)
+                mask <<= dy
+            
+            for kx in range(w):
+                col = cd[kx] << dy
+                if inv:
+                    col = ~col & mask
+
+                for ky in range(h):
+                    b = col & 0xff
+                    pos = (canvY + ky) * self.CHIP_W + kx + x
+                    if pos > -1 and pos < l:
+                        self.canvas[pos] |= b
+                    col >>= 8
+        else:
+            x = self.SCREEN_W - x - 1 - w
+            y = self.SCREEN_H - y - 1 - font.height()
+
+            canvY = math.floor(y / 8)
+            dy = y - canvY * 8
+            h = math.ceil((font.height() + dy) / 8)
+
+            mask = 0x0
+            if inv:
+                for i in range(font.height()):
+                    mask |= (1<<i)
+                mask <<= dy
+            
+            for kx in range(w):
+                rkx = w - kx - 1
+                col = 0x0
+                z = cd[rkx]
+                for i in range(font.height()):
+                    if z & (1<<i):
+                        col |= 1
+                    col <<= 1
+                
+                col <<= dy
+                if inv:
+                    col = ~col & mask
+
+                for ky in range(h):
+                    b = col & 0xff
+                    pos = (canvY + ky) * self.CHIP_W + kx + x
+                    if pos > -1 and pos < l:
+                        self.canvas[pos] |= b
+                    col >>= 8
+
+            canvY = math.floor(y / 8)
+            dy = y - canvY * 8
+            h = math.ceil((font.height() + dy) / 8)
+
+        return w
+
+    def image(self, x, y, pixelArray, inv = False, transparent=False):
         """
         The method performs the drawing of raster Image to the specifyed
         position
         pixelArray - The instance of the pixels container as PixelArray.
         inv - If True or 1, then image will be inverted.
+        transparent - If True then, a pixel with a value of 0 will not be
+        drawn.
         """
-
         kx, ky = 0, 0
         for b in pixelArray.pixels():
             if inv:
                 if not b:
                     self.pixel(x + kx, y + ky, 1)
+                elif not transparent:
+                    self.pixel(x + kx, y + ky, 0)
             else:
                 if b:
                     self.pixel(x + kx, y + ky, 1)
+                elif not transparent:
+                    self.pixel(x + kx, y + ky, 0)
 
             kx += 1
                     

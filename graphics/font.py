@@ -13,9 +13,10 @@ increases slightly but significantly save memory.
 import math
 
 class Font(object):  
-    def __init__(self, fileName):
+    def __init__(self, fileName, cached = False):        
         self.file = None
         self.fileName = fileName
+        self.cached = cached
         self.open()
 
     def __del__(self):
@@ -30,6 +31,9 @@ class Font(object):
         if not self.file:
             self.file = open(self.fileName, 'rb')
             self.header = self.file.read(32)
+            if self.cached:
+                self.fontData = self.file.read()
+                self.close()
 
     def close(self):
         """
@@ -51,13 +55,18 @@ class Font(object):
             c = cFrom
         if c > cTo:
             c = cTo
-            
-        f = self.file
-        # Offset to the stream to the desired character
-        f.seek(32 + (c - cFrom) * 3)
-        p = f.read(3)
-        x = (p[1] << 8) + p[0]
-        w = p[2]
+
+        if not self.cached:
+            f = self.file
+            # Offset to the stream to the desired character
+            f.seek(32 + (c - cFrom) * 3)
+            p = f.read(3)
+            x = (p[1] << 8) + p[0]
+            w = p[2]
+        else:
+            i = (c - cFrom) * 3
+            x = (self.fontData[i + 1] << 8) + self.fontData[i]
+            w = self.fontData[i + 2]
         return(x, w)
         
     def char_data(self, c):
@@ -76,17 +85,28 @@ class Font(object):
         
         cs = self.char_size(c)        
         bh = math.ceil(height / 8)
-        f = self.file
-        # Offset to the stream to the desired character
-        f.seek(32 + (cTo - cFrom + 1) * 3 + cs[0] * bh)
         res = []
-        # Read char
-        for x in range(cs[1]):
-            b = 0
-            for y in range(bh):
-                r = f.read(1)
-                b |= r[0] << (y * 8)
-            res.append(b)
+
+        if not self.cached:        
+            f = self.file
+            # Offset to the stream to the desired character
+            f.seek(32 + (cTo - cFrom + 1) * 3 + cs[0] * bh)
+            # Read char
+            for x in range(cs[1]):
+                b = 0
+                for y in range(bh):
+                    r = f.read(1)
+                    b |= r[0] << (y * 8)
+                res.append(b)
+        else:
+            fd = self.fontData
+            i = (cTo - cFrom + 1) * 3 + cs[0] * bh
+            for x in range(cs[1]):
+                b = 0
+                for y in range(bh):
+                    b |= fd[i] << (y * 8)
+                    i += 1
+                res.append(b)
         return res
 
     def height(self):
