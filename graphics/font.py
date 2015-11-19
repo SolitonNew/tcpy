@@ -19,9 +19,6 @@ class Font(object):
         self.cached = cached
         self.open()
 
-    def __del__(self):
-        self.close()
-
     def open(self):
         """
         The method openes font file for reading. This method is could

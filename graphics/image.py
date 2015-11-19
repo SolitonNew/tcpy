@@ -281,7 +281,7 @@ class BMP(object):
     def _pixels_1(self):
         f = self.file
         masks = ((1<<7), (1<<6), (1<<5), (1<<4), (1<<3), (1<<2), (1<<1), (1<<0))
-        ba = array.array('i', range(self.width() * self.height()))
+        ba = array.array('b', range(self.width() * self.height()))
         f.seek(self.dataOff)
         lineSize = math.ceil(self.width() / 32) * 4
         for y in range(self.height() - 1, -1, -1):
