@@ -201,15 +201,12 @@ class LCD(object):
         If the parameter is specified either True or 1, then the rectangle will
         be painted over.
         """
-        for x in range(x1, x2 + 1):
-            self.pixel(x, y1, 1)
-            self.pixel(x, y2, 1)
         if solid:
             self._fill_rect(x1, y1, x2, y2, True)
-            #for y in range(y1 + 1, y2):
-            #    for x in range(x1, x2 + 1):
-            #        self.pixel(x, y, 1)
         else:
+            for x in range(x1, x2 + 1):
+                self.pixel(x, y1, 1)
+                self.pixel(x, y2, 1)
             for y in range(y1 + 1, y2):
                 self.pixel(x1, y, 1)
                 self.pixel(x2, y, 1)
@@ -230,25 +227,24 @@ class LCD(object):
 
             x1, y1, x2, y2 = x2, y2, x1, y1
         
-        l1, l2 = math.ceil(y1 / 8), math.ceil(y2 / 8)
+        l1, l2 = math.floor(y1 / 8), math.ceil((y2 + 1) / 8)
 
         flcTop = 0x0
-        k = 0
-        for y in range(l1 * 8, y1):
-            flcTop |= 1 << k
-            k += 1
-        flcTop = ~flcTop
+        for i in range(8):
+            if ((l1 * 8) + i) >= y1:
+                flcTop |= (1 << i)
 
         flcBottom = 0x0
-        k = 0
-        for y in range((l2 - 1) * 8, y2):
-            flcBottom |= 1 << k
-            k += 1
+        for i in range(8):
+            if (((l2 - 1) * 8) + i) <= y2:
+                flcBottom |= (1 << i)
         
         if fillColor:
             flc = 0xff
         else:
-            flc = 0x0        
+            flc = 0x0
+
+        x2 += 1
 
         k = l1 * self.CHIP_W
         if fillColor:
